@@ -2,7 +2,7 @@ package com.jetslice.referncert;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
+import android.graphics.Typeface;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -13,8 +13,11 @@ import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Random;
 
 /**
  * Created by shubham on 6/9/17.
@@ -34,7 +37,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.Recycl
     @Override
     public BookListAdapter.RecyclerViewHoldersx onCreateViewHolder(ViewGroup parent, int viewType) {
 
-        View layoutView = LayoutInflater.from(parent.getContext()).inflate(R.layout.book_itemx, null);
+        View layoutView = LayoutInflater.from(parent.getContext()).inflate(R.layout.book_itemx, parent,false);
         Animation slideUpAnimation = AnimationUtils.loadAnimation(context, R.anim.slide_up_animation);
         layoutView.startAnimation(slideUpAnimation);
         RecyclerViewHoldersx rcv = new RecyclerViewHoldersx(layoutView);
@@ -43,7 +46,17 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.Recycl
 
     @Override
     public void onBindViewHolder(final BookListAdapter.RecyclerViewHoldersx holder, int position) {
+        int chaps = 0;
+        try {
+            chaps=getBookChapters(itemList.get(position),clsno).size();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Typeface type = Typeface.createFromAsset(context.getAssets(),"fonts/Lobster_1.3.otf");
         holder.bookname.setText("" + itemList.get(position));
+        holder.bookname.setTypeface(type);
+        holder.chapnos.setText("Included Chapters: " + chaps);
+
         holder.cvbook.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -55,40 +68,8 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.Recycl
                 Toast.makeText(context, "" + chaptername, Toast.LENGTH_SHORT).show();
             }
         });
-        holder.cvbook.setBackgroundColor(generateRandomColor());
-        holder.cvbook.setCardBackgroundColor(generateRandomColorCard());
-
     }
-    public int generateRandomColor() {
-        // This is the base color which will be mixed with the generated osne
-        final Random mRandom = new Random(System.currentTimeMillis());
-        final int baseColor = Color.TRANSPARENT;
 
-        final int baseRed = Color.red(baseColor);
-        final int baseGreen = Color.green(baseColor);
-        final int baseBlue = Color.blue(baseColor);
-
-        final int red = (int) ((baseRed + mRandom.nextInt(256)) /1);
-        final int green = (int) ((baseGreen + mRandom.nextInt(256)) / 1);
-        final int blue = (int) ((baseBlue + mRandom.nextInt(256)) / 1);
-
-        return Color.rgb(red, green, blue);
-    }
-    public int generateRandomColorCard() {
-        // This is the base color which will be mixed with the generated osne
-        final Random mRandom = new Random(System.currentTimeMillis());
-        final int baseColor = Color.WHITE;
-
-        final int baseRed = Color.red(baseColor);
-        final int baseGreen = Color.green(baseColor);
-        final int baseBlue = Color.blue(baseColor);
-
-        final int red = (int) ((baseRed + mRandom.nextInt(256)) /2);
-        final int green = (int) ((baseGreen + mRandom.nextInt(256)) / 2);
-        final int blue = (int) ((baseBlue + mRandom.nextInt(256)) / 2);
-
-        return Color.rgb(red, green, blue);
-    }
 
     @Override
     public int getItemCount() {
@@ -97,7 +78,8 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.Recycl
 
 
     public class RecyclerViewHoldersx extends RecyclerView.ViewHolder {
-        TextView bookname;
+        TextView bookname,chapnos;
+
 //        Button bookopen;
 //        ImageButton bookimage;
 //        LinearLayout ll;
@@ -106,10 +88,29 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.Recycl
         public RecyclerViewHoldersx(View itemView) {
             super(itemView);
             bookname = itemView.findViewById(R.id.tvbookx);
+            chapnos = itemView.findViewById(R.id.tvchapnos);
+
 //            bookopen = itemView.findViewById(R.id.open_book);
 //            bookimage = itemView.findViewById(R.id.book_pic);
 //            ll=itemView.findViewById(R.id.bookll);
             cvbook=itemView.findViewById(R.id.book_cardx);
         }
+    }
+    private ArrayList<String> getBookChapters(String Book, int clsno) throws IOException {
+        ArrayList<String> BookChapters=new ArrayList<>();
+        InputStream is;
+        boolean flag ;
+        is = context.getResources().openRawResource(R.raw.expmp);
+        flag = false;
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        String line;
+        while ((line = reader.readLine()) != null){
+            String arr[] = line.split(",");
+            if ((arr[1].equals(Book)) && (Integer.parseInt(arr[0])==clsno)){
+                BookChapters.add(arr[2]);
+                flag=true;
+            }
+        }
+        return BookChapters;
     }
 }
